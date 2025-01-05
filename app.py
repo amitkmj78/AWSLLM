@@ -8,7 +8,8 @@ import streamlit as st
 
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain.llms.bedrock import Bedrock
-
+AWS_KEY = st.sidebar.text_input(label="AWS Key",placeholder="enter your access key", type="password")
+AWS_SECRET_KEY = st.sidebar.text_input(label="AWS secret",placeholder="enter your secret key",type="password")
 ## Data Ingestion
 
 import numpy as np
@@ -24,7 +25,8 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 
 ## Bedrock Clients
-Bedrock_Client=boto3.client(service_name="bedrock-runtime")
+Bedrock_Client=boto3.client(service_name="bedrock-runtime", aws_access_key_id=AWS_KEY, 
+aws_secret_access_key=AWS_SECRET_KEY, region_name='us-east-1')
 bedrock_embeddings=BedrockEmbeddings(model_id="amazon.titan-embed-text-v1",client=Bedrock_Client)
 
 
@@ -110,7 +112,7 @@ def get_response_llm(llm,vectorstore_faiss,query):
 
 
 def main():
-    st.set_page_config("Chat PDF")
+    #st.set_page_config("Chat PDF")
     uploaded_file=st.file_uploader( label="Please upload data in CSV, Excel and PDF to convert into Context", type=["csv", "xlsx", "PDF"])
     st.write(uploaded_file)
 
