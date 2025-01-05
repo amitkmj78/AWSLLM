@@ -1,6 +1,5 @@
 import json
 import os
-import sys
 import boto3
 import streamlit as st
 
@@ -12,7 +11,6 @@ AWS_KEY = st.sidebar.text_input(label="AWS Key",placeholder="enter your access k
 AWS_SECRET_KEY = st.sidebar.text_input(label="AWS secret",placeholder="enter your secret key",type="password")
 ## Data Ingestion
 
-import numpy as np
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 
@@ -94,8 +92,7 @@ Assistant:"""
 PROMPT = PromptTemplate(
     template=prompt_template, input_variables=["context", "question"]
 )
-
-
+#Genrtate Reposne
 def get_response_llm(llm,vectorstore_faiss,query):
     qa = RetrievalQA.from_chain_type(
     llm=llm,
@@ -109,30 +106,40 @@ def get_response_llm(llm,vectorstore_faiss,query):
     answer=qa({"query":query})
     return answer['result']
 
-
+def list_models():
+    try:
+        response = Bedrock_Client
+        ##st.info(response)
+        if response is not None:
+         st.info('connected to AWS')
+    except Exception as e:
+        print(f"Error in Connecting: {e}")
+        return None
 
 def main():
-    #st.set_page_config("Chat PDF")
+    
+    if st.sidebar.button("Check Connection "):
+       with st.spinner("Processing..."):
+        list_models()
+        
+         #st.set_page_config("Chat PDF")
     uploaded_file=st.file_uploader( label="Please upload data in CSV, Excel and PDF to convert into Context", type=["csv", "xlsx", "PDF"])
     st.write(uploaded_file)
 
     if uploaded_file is not None:
     # Save the uploaded file in the 'fdata' folder
-        file_path = os.path.join("data", uploaded_file.name)
-        if file_path is not None:
-            with open(file_path, "wb") as f:
-                f.write(uploaded_file.read())
+            file_path = os.path.join("data", uploaded_file.name)
+            if file_path is not None:
+                   with open(file_path, "wb") as f:
+                    f.write(uploaded_file.read())
     
-                st.success(f"File saved successfully at: {file_path}")
+                    st.success(f"File saved successfully at: {file_path}")
     
     st.header("Chat with your Data using AWS Bedrock💁")
-
-   
     user_question = st.text_input("Ask a Question from the PDF Files")
 
     with st.sidebar:
         st.title("Update Or Create Vector Store:")
-        
         if st.button("Vectors Update"):
             with st.spinner("Processing..."):
                 docs = DataIngestion()
@@ -141,6 +148,7 @@ def main():
 
     if st.button("Claude Output"):
         with st.spinner("Processing..."):
+            list_models()
             faiss_index = FAISS.load_local("faiss_index", bedrock_embeddings,allow_dangerous_deserialization=True)
             llm=get_claude_llm()
             
@@ -149,6 +157,7 @@ def main():
             st.success("Done")
 
     if st.button("Mistral Output"):
+        list_models()
         with st.spinner("Processing..."):
             faiss_index = FAISS.load_local("faiss_index", bedrock_embeddings,allow_dangerous_deserialization=True)
             llm=mistral()
@@ -157,9 +166,9 @@ def main():
             st.write(get_response_llm(llm,faiss_index,user_question))
             st.success("Done")
 
-
             #get_llama3_2_llm
     if st.button("Lama Output"):
+        list_models()
         with st.spinner("Processing..."):
             faiss_index = FAISS.load_local("faiss_index", bedrock_embeddings,allow_dangerous_deserialization=True)
             llm=get_llama3_8_llm()
@@ -170,7 +179,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 
 
